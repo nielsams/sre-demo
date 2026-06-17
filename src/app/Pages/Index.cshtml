@@ -1,0 +1,43 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home";
+}
+
+<div class="p-5 mb-4 bg-light rounded-3">
+    <div class="container-fluid py-3">
+        <h1 class="display-5 fw-bold">Build your dream PC</h1>
+        <p class="col-md-8 fs-5">Browse our catalog of processors, graphics cards, memory, storage and more from the brands you trust.</p>
+        <a class="btn btn-primary btn-lg" asp-page="/Catalog">Browse the full catalog</a>
+    </div>
+</div>
+
+<h2 class="mb-3">Shop by category</h2>
+<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 mb-5">
+    @foreach (var category in Model.Categories)
+    {
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">@category.Name</h5>
+                    <p class="card-text text-muted">@category.Description</p>
+                </div>
+                <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                    <span class="badge bg-secondary">@category.ProductCount items</span>
+                    <a class="btn btn-sm btn-outline-primary" asp-page="/Catalog" asp-route-category="@category.Code">View</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (Model.Featured.Count > 0)
+{
+    <h2 class="mb-3">Featured products</h2>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-4">
+        @foreach (var product in Model.Featured)
+        {
+            <partial name="_ProductCard" model="product" />
+        }
+    </div>
+}

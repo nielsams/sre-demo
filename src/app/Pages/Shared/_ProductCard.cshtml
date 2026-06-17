@@ -1,0 +1,26 @@
+@model SreDemo.Catalog.Models.Product
+
+<div class="col">
+    <div class="card h-100 shadow-sm">
+        <img src="@(string.IsNullOrEmpty(Model.ImageUrl) ? "/images/placeholder.svg" : Model.ImageUrl)"
+             class="card-img-top p-3" alt="@Model.Name" style="height: 160px; object-fit: contain;" />
+        <div class="card-body">
+            <span class="badge bg-light text-dark mb-2">@Model.Brand</span>
+            <h6 class="card-title">
+                <a class="text-decoration-none" asp-page="/Product" asp-route-id="@Model.Id">@Model.Name</a>
+            </h6>
+            <p class="card-text small text-muted">@Model.Specs</p>
+        </div>
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+            <span class="fw-bold">@Model.Price.ToString("C")</span>
+            @if (Model.Stock > 0)
+            {
+                <span class="badge bg-success">In stock</span>
+            }
+            else
+            {
+                <span class="badge bg-danger">Out of stock</span>
+            }
+        </div>
+    </div>
+</div>

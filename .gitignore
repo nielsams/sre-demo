@@ -1,0 +1,18 @@
+# Build artifacts
+**/bin/
+**/obj/
+**/publish/
+src/app/app.zip
+
+# Bicep compiled output
+src/infra/**/*.json
+!src/infra/**/*.bicepparam
+
+# Local secrets / params with real values
+*.local.bicepparam
+*.env
+
+# IDE
+.vs/
+.vscode/
+*.user

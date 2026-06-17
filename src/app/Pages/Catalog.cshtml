@@ -1,0 +1,119 @@
+@page
+@model CatalogModel
+@{
+    ViewData["Title"] = Model.CurrentCategoryName ?? "Catalog";
+}
+
+<div class="row">
+    <aside class="col-md-3 mb-4">
+        <form method="get">
+            <input type="hidden" name="sort" value="@Model.Sort" />
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Search</label>
+                <input class="form-control" type="search" name="search" value="@Model.Search" placeholder="Keyword..." />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Category</label>
+                <select class="form-select" name="category" onchange="this.form.submit()">
+                    <option value="">All categories</option>
+                    @foreach (var category in Model.Categories)
+                    {
+                        if (category.Code == Model.Category)
+                        {
+                            <option value="@category.Code" selected>@category.Name (@category.ProductCount)</option>
+                        }
+                        else
+                        {
+                            <option value="@category.Code">@category.Name (@category.ProductCount)</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Brand</label>
+                <select class="form-select" name="brand" onchange="this.form.submit()">
+                    <option value="">All brands</option>
+                    @foreach (var brand in Model.Brands)
+                    {
+                        if (brand == Model.Brand)
+                        {
+                            <option value="@brand" selected>@brand</option>
+                        }
+                        else
+                        {
+                            <option value="@brand">@brand</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <button class="btn btn-primary w-100" type="submit">Apply filters</button>
+            <a class="btn btn-link w-100" asp-page="/Catalog">Clear all</a>
+        </form>
+    </aside>
+
+    <section class="col-md-9">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h1 class="h4 mb-0">@(Model.CurrentCategoryName ?? "All products")</h1>
+                <small class="text-muted">@Model.Results.TotalCount result(s)</small>
+            </div>
+            <form method="get" class="d-flex align-items-center">
+                <input type="hidden" name="category" value="@Model.Category" />
+                <input type="hidden" name="brand" value="@Model.Brand" />
+                <input type="hidden" name="search" value="@Model.Search" />
+                <label class="form-label me-2 mb-0 text-nowrap">Sort by</label>
+                <select class="form-select" name="sort" onchange="this.form.submit()">
+                    @foreach (var option in CatalogModel.SortOptions)
+                    {
+                        if (option.Value == Model.Sort)
+                        {
+                            <option value="@option.Value" selected>@option.Label</option>
+                        }
+                        else
+                        {
+                            <option value="@option.Value">@option.Label</option>
+                        }
+                    }
+                </select>
+            </form>
+        </div>
+
+        @if (Model.Results.Items.Count == 0)
+        {
+            <div class="alert alert-info">No products match your filters.</div>
+        }
+        else
+        {
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
+                @foreach (var product in Model.Results.Items)
+                {
+                    <partial name="_ProductCard" model="product" />
+                }
+            </div>
+
+            @if (Model.Results.TotalPages > 1)
+            {
+                <nav class="mt-4" aria-label="Catalog pages">
+                    <ul class="pagination justify-content-center">
+                        @for (var i = 1; i <= Model.Results.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.Results.Page ? "active" : "")">
+                                <a class="page-link"
+                                   asp-page="/Catalog"
+                                   asp-route-category="@Model.Category"
+                                   asp-route-brand="@Model.Brand"
+                                   asp-route-search="@Model.Search"
+                                   asp-route-sort="@Model.Sort"
+                                   asp-route-page="@i">@i</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        }
+    </section>
+</div>

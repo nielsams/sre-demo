@@ -1,0 +1,49 @@
+@page "{id:int}"
+@model ProductModel
+@{
+    ViewData["Title"] = Model.Product.Name;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-page="/Index">Home</a></li>
+        <li class="breadcrumb-item">
+            <a asp-page="/Catalog" asp-route-category="@Model.Product.CategoryCode">@Model.Product.CategoryName</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.Product.Name</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-md-5 text-center mb-4">
+        <img src="@(string.IsNullOrEmpty(Model.Product.ImageUrl) ? "/images/placeholder.svg" : Model.Product.ImageUrl)"
+             class="img-fluid p-3 border rounded" alt="@Model.Product.Name" style="max-height: 360px; object-fit: contain;" />
+    </div>
+    <div class="col-md-7">
+        <span class="badge bg-light text-dark mb-2">@Model.Product.Brand</span>
+        <h1 class="h3">@Model.Product.Name</h1>
+        <p class="text-muted">SKU: @Model.Product.Sku</p>
+        <p class="display-6 fw-bold">@Model.Product.Price.ToString("C")</p>
+
+        @if (Model.Product.Stock > 0)
+        {
+            <p class="text-success"><strong>In stock</strong> (@Model.Product.Stock available)</p>
+        }
+        else
+        {
+            <p class="text-danger"><strong>Out of stock</strong></p>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.Product.Description))
+        {
+            <p>@Model.Product.Description</p>
+        }
+
+        <h5 class="mt-4">Specifications</h5>
+        <p>@Model.Product.Specs</p>
+
+        <a class="btn btn-outline-secondary mt-3" asp-page="/Catalog" asp-route-category="@Model.Product.CategoryCode">
+            &larr; Back to @Model.Product.CategoryName
+        </a>
+    </div>
+</div>
