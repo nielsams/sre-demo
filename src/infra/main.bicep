@@ -103,6 +103,21 @@ module appGateway 'modules/appgateway.bicep' = {
   }
 }
 
+module monitoring 'modules/monitoring.bicep' = {
+  name: 'monitoring'
+  params: {
+    location: location
+    namePrefix: namePrefix
+    webAppName: webAppName
+    tags: tags
+  }
+  dependsOn: [
+    network
+    appService
+    appGateway
+  ]
+}
+
 @description('Public URL of the catalog (via Application Gateway).')
 output siteUrl string = 'http://${appGateway.outputs.publicFqdn}'
 output publicIpAddress string = appGateway.outputs.publicIpAddress
@@ -110,3 +125,5 @@ output webAppName string = appService.outputs.webAppName
 output webAppHostName string = appService.outputs.defaultHostName
 output oracleVmName string = oracle.outputs.vmName
 output oraclePrivateIp string = oracle.outputs.privateIp
+output logAnalyticsWorkspaceId string = monitoring.outputs.workspaceId
+output logAnalyticsWorkspaceName string = monitoring.outputs.workspaceName
