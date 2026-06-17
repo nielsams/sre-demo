@@ -128,6 +128,24 @@ module loadTesting 'modules/loadtesting.bicep' = {
   }
 }
 
+module healthModel 'modules/healthmodel.bicep' = {
+  name: 'healthModel'
+  params: {
+    location: location
+    namePrefix: namePrefix
+    webAppName: webAppName
+    tags: tags
+  }
+  dependsOn: [
+    network
+    appService
+    appGateway
+    oracle
+    monitoring
+    loadTesting
+  ]
+}
+
 @description('Public URL of the catalog (via Application Gateway).')
 output siteUrl string = 'http://${appGateway.outputs.publicFqdn}'
 output publicIpAddress string = appGateway.outputs.publicIpAddress
@@ -138,3 +156,4 @@ output oraclePrivateIp string = oracle.outputs.privateIp
 output logAnalyticsWorkspaceId string = monitoring.outputs.workspaceId
 output logAnalyticsWorkspaceName string = monitoring.outputs.workspaceName
 output loadTestName string = loadTesting.outputs.loadTestName
+output healthModelName string = healthModel.outputs.healthModelName
