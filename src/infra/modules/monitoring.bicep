@@ -64,6 +64,10 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' existing = {
   name: webAppName
 }
 
+resource oracleVm 'Microsoft.Compute/virtualMachines@2023-09-01' existing = {
+  name: '${namePrefix}-oracle-vm'
+}
+
 var diagName = 'to-law'
 
 // ---- Diagnostic settings (logs + metrics) ----------------------------------
@@ -178,3 +182,70 @@ resource dbNsgDiag 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = 
 
 output workspaceId string = law.id
 output workspaceName string = law.name
+
+// ============================================================================
+// Oracle VM: Azure Monitor Agent + Data Collection Rule (Linux syslog).
+//   VMs have no resource-level diagnostic settings, so guest logs are collected
+//   by AMA and routed to the workspace via a DCR + association. AMA authenticates
+//   using the VM's system-assigned managed identity.
+// ============================================================================
+
+resource syslogDcr 'Microsoft.Insights/dataCollectionRules@2022-06-01' = {
+  name: '${namePrefix}-dcr-syslog'
+  location: location
+  tags: tags
+  properties: {
+    dataSources: {
+      syslog: [
+        {
+          name: 'syslogBase'
+          streams: [ 'Microsoft-Syslog' ]
+          facilityNames: [ '*' ]
+          logLevels: [ '*' ]
+        }
+      ]
+    }
+    destinations: {
+      logAnalytics: [
+        {
+          name: 'laDest'
+          workspaceResourceId: law.id
+        }
+      ]
+    }
+    dataFlows: [
+      {
+        streams: [ 'Microsoft-Syslog' ]
+        destinations: [ 'laDest' ]
+      }
+    ]
+  }
+}
+
+resource amaLinux 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
+  parent: oracleVm
+  name: 'AzureMonitorLinuxAgent'
+  location: location
+  tags: tags
+  properties: {
+    publisher: 'Microsoft.Azure.Monitor'
+    type: 'AzureMonitorLinuxAgent'
+    typeHandlerVersion: '1.0'
+    autoUpgradeMinorVersion: true
+    enableAutomaticUpgrade: true
+  }
+}
+
+// Link the VM to the DCR (scoped to the VM as an extension resource).
+resource dcrAssociation 'Microsoft.Insights/dataCollectionRuleAssociations@2022-06-01' = {
+  name: '${namePrefix}-dcr-assoc'
+  scope: oracleVm
+  properties: {
+    dataCollectionRuleId: syslogDcr.id
+  }
+  dependsOn: [
+    amaLinux
+  ]
+}
+
+output dataCollectionRuleId string = syslogDcr.id

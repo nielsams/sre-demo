@@ -64,6 +64,9 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
   name: '${namePrefix}-oracle-vm'
   location: location
   tags: tags
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     hardwareProfile: {
       vmSize: vmSize

@@ -115,6 +115,7 @@ module monitoring 'modules/monitoring.bicep' = {
     network
     appService
     appGateway
+    oracle
   ]
 }
 
