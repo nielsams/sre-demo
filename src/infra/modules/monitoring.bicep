@@ -249,3 +249,106 @@ resource dcrAssociation 'Microsoft.Insights/dataCollectionRuleAssociations@2022-
 }
 
 output dataCollectionRuleId string = syslogDcr.id
+
+// ============================================================================
+// Oracle application logs (alert log + listener log) via AMA custom text logs.
+//   A DCR-based custom table receives each log line as RawData; a second DCR
+//   with a logFiles data source tails the Oracle diag files and ships them to
+//   the workspace. AMA reads the files directly (no rsyslog involved).
+// ============================================================================
+
+resource dce 'Microsoft.Insights/dataCollectionEndpoints@2022-06-01' = {
+  name: '${namePrefix}-dce'
+  location: location
+  tags: tags
+  properties: {
+    networkAcls: {
+      publicNetworkAccess: 'Enabled'
+    }
+  }
+}
+
+resource oracleLogTable 'Microsoft.OperationalInsights/workspaces/tables@2022-10-01' = {  parent: law
+  name: 'OracleLogs_CL'
+  properties: {
+    retentionInDays: retentionInDays
+    schema: {
+      name: 'OracleLogs_CL'
+      columns: [
+        { name: 'TimeGenerated', type: 'datetime' }
+        { name: 'RawData', type: 'string' }
+        { name: 'FilePath', type: 'string' }
+        { name: 'Computer', type: 'string' }
+      ]
+    }
+  }
+}
+
+resource oracleDcr 'Microsoft.Insights/dataCollectionRules@2022-06-01' = {
+  name: '${namePrefix}-dcr-oracle'
+  location: location
+  tags: tags
+  properties: {
+    dataCollectionEndpointId: dce.id
+    streamDeclarations: {
+      'Custom-OracleLogs_CL': {
+        columns: [
+          { name: 'TimeGenerated', type: 'datetime' }
+          { name: 'RawData', type: 'string' }
+          { name: 'FilePath', type: 'string' }
+          { name: 'Computer', type: 'string' }
+        ]
+      }
+    }
+    dataSources: {
+      logFiles: [
+        {
+          name: 'oracleTextLogs'
+          streams: [ 'Custom-OracleLogs_CL' ]
+          filePatterns: [
+            '/u01/app/oracle/diag/rdbms/orcl/ORCL/trace/alert_*.log'
+            '/u01/app/oracle/diag/tnslsnr/oracledb/listener/trace/listener.log'
+          ]
+          format: 'text'
+          settings: {
+            text: {
+              recordStartTimestampFormat: 'ISO 8601'
+            }
+          }
+        }
+      ]
+    }
+    destinations: {
+      logAnalytics: [
+        {
+          name: 'laDest'
+          workspaceResourceId: law.id
+        }
+      ]
+    }
+    dataFlows: [
+      {
+        streams: [ 'Custom-OracleLogs_CL' ]
+        destinations: [ 'laDest' ]
+        transformKql: 'source'
+        outputStream: 'Custom-OracleLogs_CL'
+      }
+    ]
+  }
+  dependsOn: [
+    oracleLogTable
+  ]
+}
+
+resource oracleDcrAssociation 'Microsoft.Insights/dataCollectionRuleAssociations@2022-06-01' = {
+  name: '${namePrefix}-dcr-oracle-assoc'
+  scope: oracleVm
+  properties: {
+    dataCollectionRuleId: oracleDcr.id
+  }
+  dependsOn: [
+    amaLinux
+  ]
+}
+
+output oracleDataCollectionRuleId string = oracleDcr.id
