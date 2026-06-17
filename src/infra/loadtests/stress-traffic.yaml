@@ -1,0 +1,14 @@
+version: v0.1
+testId: pcdepot-stress-traffic
+displayName: Stress traffic (overload)
+description: 5x250 VUs flooding DB-heavy catalog/search endpoints to overload the app and Oracle DB.
+testType: JMX
+testPlan: stress-traffic.jmx
+engineInstances: 5
+autoStop: disable
+env:
+  - name: domain
+    value: pcdepot-mcd7ghnaavha6.swedencentral.cloudapp.azure.com
+failureCriteria:
+  - avg(response_time_ms) > 5000
+  - percentage(error) > 10

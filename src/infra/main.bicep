@@ -119,6 +119,15 @@ module monitoring 'modules/monitoring.bicep' = {
   ]
 }
 
+module loadTesting 'modules/loadtesting.bicep' = {
+  name: 'loadTesting'
+  params: {
+    location: location
+    namePrefix: namePrefix
+    tags: tags
+  }
+}
+
 @description('Public URL of the catalog (via Application Gateway).')
 output siteUrl string = 'http://${appGateway.outputs.publicFqdn}'
 output publicIpAddress string = appGateway.outputs.publicIpAddress
@@ -128,3 +137,4 @@ output oracleVmName string = oracle.outputs.vmName
 output oraclePrivateIp string = oracle.outputs.privateIp
 output logAnalyticsWorkspaceId string = monitoring.outputs.workspaceId
 output logAnalyticsWorkspaceName string = monitoring.outputs.workspaceName
+output loadTestName string = loadTesting.outputs.loadTestName

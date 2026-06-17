@@ -1,0 +1,13 @@
+version: v0.1
+testId: pcdepot-normal-traffic
+displayName: Normal traffic (steady state)
+description: 25 VUs browsing home, catalog, search and product pages with think time; app stays healthy.
+testType: JMX
+testPlan: normal-traffic.jmx
+engineInstances: 1
+env:
+  - name: domain
+    value: pcdepot-mcd7ghnaavha6.swedencentral.cloudapp.azure.com
+failureCriteria:
+  - avg(response_time_ms) > 2000
+  - percentage(error) > 5
