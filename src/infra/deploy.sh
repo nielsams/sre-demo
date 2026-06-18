@@ -96,6 +96,19 @@ echo "    Web app:    $WEBAPP_NAME"
 echo "    Oracle VM:  $ORACLE_VM_NAME"
 echo "    Public URL: $SITE_URL"
 
+# A deallocated/stopped VM (e.g. from a previous run that was shut down to save
+# cost) would make the run-command below fail. Start any VM in the RG that is
+# not already running before continuing.
+echo "==> Ensuring all VMs are running"
+STOPPED_VMS=$(az vm list -g "$RESOURCE_GROUP" --show-details --query "[?powerState!='VM running'].name" -o tsv)
+if [[ -n "$STOPPED_VMS" ]]; then
+  while IFS= read -r vm; do
+    [[ -z "$vm" ]] && continue
+    echo "    Starting VM '$vm'..."
+    az vm start -g "$RESOURCE_GROUP" -n "$vm" --output none
+  done <<< "$STOPPED_VMS"
+fi
+
 echo "==> Creating Oracle database + loading schema/seed data"
 SCHEMA_B64=$(base64 -w0 "$ASSETS_DIR/schema.sql")
 SEED_B64=$(base64 -w0 "$ASSETS_DIR/seed.sql")

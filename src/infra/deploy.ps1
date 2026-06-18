@@ -85,6 +85,17 @@ Write-Host "    Web app:    $webAppName"
 Write-Host "    Oracle VM:  $oracleVmName"
 Write-Host "    Public URL: $siteUrl"
 
+# A deallocated/stopped VM (e.g. from a previous run that was shut down to save
+# cost) would make the run-command below fail. Start any VM in the RG that is
+# not already running before continuing.
+Write-Host '==> Ensuring all VMs are running' -ForegroundColor Cyan
+$stoppedVms = az vm list --resource-group $ResourceGroup --show-details --query "[?powerState!='VM running'].name" --output tsv
+foreach ($vm in ($stoppedVms -split "`n" | Where-Object { $_.Trim() -ne '' })) {
+    $vm = $vm.Trim()
+    Write-Host "    Starting VM '$vm'..."
+    az vm start --resource-group $ResourceGroup --name $vm --output none
+}
+
 Write-Host '==> Creating Oracle database + loading schema/seed data' -ForegroundColor Cyan
 $schemaB64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $assetsDir 'schema.sql')))
 $seedB64   = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $assetsDir 'seed.sql')))
