@@ -39,6 +39,14 @@ param imageVersion string = 'latest'
 @description('OS disk size in GB.')
 param osDiskSizeGb int = 128
 
+@description('OS disk storage account type. Must match the existing disk on redeploys; changing it through the VM is not allowed by Azure.')
+@allowed([
+  'Standard_LRS'
+  'StandardSSD_LRS'
+  'Premium_LRS'
+])
+param osDiskStorageAccountType string = 'Standard_LRS'
+
 @description('Tags applied to all resources.')
 param tags object = {}
 
@@ -90,7 +98,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
         createOption: 'FromImage'
         diskSizeGB: osDiskSizeGb
         managedDisk: {
-          storageAccountType: 'Premium_LRS'
+          storageAccountType: osDiskStorageAccountType
         }
       }
     }
