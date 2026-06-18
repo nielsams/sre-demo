@@ -101,6 +101,7 @@ $schemaB64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $asset
 $seedB64   = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $assetsDir 'seed.sql')))
 $createB64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $here 'scripts/create-db.sh')))
 $loadB64   = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $here 'scripts/load-data.sh')))
+$autostartB64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $here 'scripts/enable-db-autostart.sh')))
 
 # Base64-encode the secrets too, so no shell-special characters appear anywhere
 # in the script text (base64 is [A-Za-z0-9+/=] only). Decoded on the VM.
@@ -116,7 +117,8 @@ echo '$schemaB64' | base64 -d > /tmp/schema.sql
 echo '$seedB64'   | base64 -d > /tmp/seed.sql
 echo '$createB64' | base64 -d > /tmp/create-db.sh
 echo '$loadB64'   | base64 -d > /tmp/load-data.sh
-chmod +x /tmp/create-db.sh /tmp/load-data.sh
+echo '$autostartB64' | base64 -d > /tmp/enable-db-autostart.sh
+chmod +x /tmp/create-db.sh /tmp/load-data.sh /tmp/enable-db-autostart.sh
 export DB_SERVICE='$DbServiceName'
 export DB_USER='$DbUser'
 export DB_PASSWORD="`$(echo '$dbPwdB64' | base64 -d)"
@@ -131,6 +133,9 @@ run_as_oracle() {
 }
 run_as_oracle /tmp/create-db.sh
 run_as_oracle /tmp/load-data.sh
+# Install the boot-time auto-start unit as root (the marketplace image starts the
+# listener on boot but not the DB instance). Runs after the DB exists.
+bash /tmp/enable-db-autostart.sh
 "@
 
 # Pass the script via a temp file (@file) to avoid az.cmd batch-wrapper mangling.

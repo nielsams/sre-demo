@@ -114,6 +114,7 @@ SCHEMA_B64=$(base64 -w0 "$ASSETS_DIR/schema.sql")
 SEED_B64=$(base64 -w0 "$ASSETS_DIR/seed.sql")
 CREATE_B64=$(base64 -w0 "$HERE/scripts/create-db.sh")
 LOAD_B64=$(base64 -w0 "$HERE/scripts/load-data.sh")
+AUTOSTART_B64=$(base64 -w0 "$HERE/scripts/enable-db-autostart.sh")
 
 # Base64-encode the secrets so no shell-special characters appear in the script.
 DB_PWD_B64=$(printf '%s' "$DB_PASSWORD" | base64 -w0)
@@ -128,7 +129,8 @@ echo '$SCHEMA_B64' | base64 -d > /tmp/schema.sql
 echo '$SEED_B64'   | base64 -d > /tmp/seed.sql
 echo '$CREATE_B64' | base64 -d > /tmp/create-db.sh
 echo '$LOAD_B64'   | base64 -d > /tmp/load-data.sh
-chmod +x /tmp/create-db.sh /tmp/load-data.sh
+echo '$AUTOSTART_B64' | base64 -d > /tmp/enable-db-autostart.sh
+chmod +x /tmp/create-db.sh /tmp/load-data.sh /tmp/enable-db-autostart.sh
 chown oracle:oinstall /tmp/create-db.sh /tmp/load-data.sh /tmp/schema.sql /tmp/seed.sql
 DB_SERVICE='$DB_SERVICE_NAME'
 DB_USER='$DB_USER'
@@ -141,6 +143,9 @@ run_as_oracle() {
 }
 run_as_oracle /tmp/create-db.sh
 run_as_oracle /tmp/load-data.sh
+# Install the boot-time auto-start unit as root (the marketplace image starts the
+# listener on boot but not the DB instance). Runs after the DB exists.
+bash /tmp/enable-db-autostart.sh
 EOF
 )
 
